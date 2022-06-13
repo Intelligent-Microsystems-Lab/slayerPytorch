@@ -8,25 +8,41 @@ import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import Dataset, DataLoader
 import slayerSNN as snn
+import pandas as pd
+import torch.nn.utils.prune as prune
+import argparse
+
+parser = argparse.ArgumentParser(description='PyTorch SLAYER Training')
+parser.add_argument('--prunerate', default=0, type=float, metavar='DR',
+                    help='pruneout') 
 
 # Define dataset module
 class IBMGestureDataset(Dataset):
     def __init__(self, datasetPath, sampleFile, samplingTime, sampleLength):
         self.path = datasetPath 
-        self.samples = np.loadtxt(sampleFile).astype('int')
+
+        #self.samples = np.loadtxt(sampleFile, skiprows=1).astype('int')
+        self.samples = pd.read_csv(sampleFile) 
         self.samplingTime = samplingTime
         self.nTimeBins    = int(sampleLength / samplingTime)
 
     def __getitem__(self, index):
         # Read inoput and label
-        inputIndex  = self.samples[index, 0]
-        classLabel  = self.samples[index, 1]
+        # inputIndex  = self.samples[index, 0]
+        # classLabel  = self.samples[index, 1]
+        inputIndex  = self.samples['sample'][index]
+        classLabel  = self.samples['labels'][index]		
         # Read input spike
-        inputSpikes = snn.io.read2Dspikes(
-                        self.path + str(inputIndex.item()) + '.bs2'
-                        ).toSpikeTensor(torch.zeros((2,128,128,self.nTimeBins)),
-                        samplingTime=self.samplingTime)
-        # Create one-hot encoded desired matrix
+        # inputSpikes = snn.io.read2Dspikes(
+        #                 self.path + str(inputIndex.item()) + '.bs2'
+        #                 ).toSpikeTensor(torch.zeros((2,128,128,self.nTimeBins)),
+        #                 samplingTime=self.samplingTime)
+        inputSpikes = snn.io.readNpSpikes(
+            self.path + str(inputIndex) + '.npy'
+        ).toSpikeTensor(torch.zeros((2, 128, 128, self.nTimeBins)),
+                    samplingTime=self.samplingTime)        
+		
+		# Create one-hot encoded desired matrix
         desiredClass = torch.zeros((11, 1, 1, 1))
         desiredClass[classLabel,...] = 1
         
@@ -82,21 +98,21 @@ class Network(torch.nn.Module):
 		
 # Define Loihi parameter generator
 def genLoihiParams(net):
-	fc1Weights   = snn.uitls.quantize(net.fc1.weight  , 2).flatten().cpu().data.numpy()
-	fc2Weights   = snn.uitls.quantize(net.fc2.weight  , 2).flatten().cpu().data.numpy()
-	conv1Weights = snn.uitls.quantize(net.conv1.weight, 2).flatten().cpu().data.numpy()
-	conv2Weights = snn.uitls.quantize(net.conv2.weight, 2).flatten().cpu().data.numpy()
-	pool1Weights = snn.uitls.quantize(net.pool1.weight, 2).flatten().cpu().data.numpy()
-	pool2Weights = snn.uitls.quantize(net.pool2.weight, 2).flatten().cpu().data.numpy()
-	pool3Weights = snn.uitls.quantize(net.pool3.weight, 2).flatten().cpu().data.numpy()
+	fc1Weights   = snn.utils.quantize(net.fc1.weight  , 2).flatten().cpu().data.numpy()
+	fc2Weights   = snn.utils.quantize(net.fc2.weight  , 2).flatten().cpu().data.numpy()
+	conv1Weights = snn.utils.quantize(net.conv1.weight, 2).flatten().cpu().data.numpy()
+	conv2Weights = snn.utils.quantize(net.conv2.weight, 2).flatten().cpu().data.numpy()
+	pool1Weights = snn.utils.quantize(net.pool1.weight, 2).flatten().cpu().data.numpy()
+	pool2Weights = snn.utils.quantize(net.pool2.weight, 2).flatten().cpu().data.numpy()
+	pool3Weights = snn.utils.quantize(net.pool3.weight, 2).flatten().cpu().data.numpy()
 
-	np.save('Trained/fc1.npy'  , fc1Weights)
-	np.save('Trained/fc2.npy'  , fc2Weights)
-	np.save('Trained/conv1.npy', conv1Weights)
-	np.save('Trained/conv2.npy', conv2Weights)
-	np.save('Trained/pool1.npy', pool1Weights)
-	np.save('Trained/pool2.npy', pool2Weights)
-	np.save('Trained/pool3.npy', pool3Weights)
+	np.save('Trained/prune/' + str(prunerate) + '/fc1.npy'  , fc1Weights)
+	np.save('Trained/prune/' + str(prunerate) + '/fc2.npy'  , fc2Weights)
+	np.save('Trained/prune/' + str(prunerate) + '/conv1.npy', conv1Weights)
+	np.save('Trained/prune/' + str(prunerate) + '/conv2.npy', conv2Weights)
+	np.save('Trained/prune/' + str(prunerate) + '/pool1.npy', pool1Weights)
+	np.save('Trained/prune/' + str(prunerate) + '/pool2.npy', pool2Weights)
+	np.save('Trained/prune/' + str(prunerate) + '/pool3.npy', pool3Weights)
 
 	plt.figure(11)
 	plt.hist(fc1Weights  , 256)
@@ -127,6 +143,13 @@ def genLoihiParams(net):
 	plt.title('pool3 weights')
 	
 if __name__ == '__main__':
+	
+	global args
+	args = parser.parse_args()
+	prunerate = args.prunerate
+	ispruning = False
+	if prunerate !=0:
+		ispruning = True	
 	netParams = snn.params('network.yaml')
 	
 	# Define the cuda device to run the code on.
@@ -136,22 +159,21 @@ if __name__ == '__main__':
 	# Create network instance.
 	net = Network(netParams).to(device)
 	# net = torch.nn.DataParallel(Network(netParams).to(device), device_ids=deviceIds)
-
+	net.load_state_dict(torch.load('TrainedFull/ibmGestureNet.pt',map_location=device))
 	# Create snn loss instance.
 	error = snn.loss(netParams, snn.loihi).to(device)
 
 	# Define optimizer module.
 	# optimizer = torch.optim.Adam(net.parameters(), lr = 0.01, amsgrad = True)
 	optimizer = snn.utils.optim.Nadam(net.parameters(), lr = 0.01, amsgrad = True)
-
 	# Dataset and dataLoader instances.
-	trainingSet = IBMGestureDataset(datasetPath =netParams['training']['path']['in'], 
+	trainingSet = IBMGestureDataset(datasetPath =netParams['training']['path']['trainFile'], 
 									sampleFile  =netParams['training']['path']['train'],
 									samplingTime=netParams['simulation']['Ts'],
 									sampleLength=netParams['simulation']['tSample'])
 	trainLoader = DataLoader(dataset=trainingSet, batch_size=4, shuffle=True, num_workers=1)
 
-	testingSet = IBMGestureDataset(datasetPath  =netParams['training']['path']['in'], 
+	testingSet = IBMGestureDataset(datasetPath  =netParams['training']['path']['testFile'], 
 								   sampleFile  =netParams['training']['path']['test'],
 								   samplingTime=netParams['simulation']['Ts'],
 								   sampleLength=netParams['simulation']['tSample'])
@@ -159,14 +181,18 @@ if __name__ == '__main__':
 
 	# Learning stats instance.
 	stats = snn.utils.stats()
-	
+	if ispruning:
+		for name, module in net.named_modules():
+			if 'conv' in name or 'fc1' in name:
+				prune.ln_structured(module, name="weight", amount=prunerate, n=1, dim=0)
+				prune.remove(module, 'weight')    	
 	# Visualize the input spikes (first five samples).
 	for i in range(5):
 		input, target, label = trainingSet[i]
 		snn.io.showTD(snn.io.spikeArrayToEvent(input.reshape((2, 128, 128, -1)).cpu().data.numpy()))
 		
 	# for epoch in range(500):
-	for epoch in range(5):
+	for epoch in range(25):
 		tSt = datetime.now()
 
 		# Training loop.
@@ -221,12 +247,12 @@ if __name__ == '__main__':
 
 		# Update stats.
 		stats.update()
-		stats.plot(saveFig=True, path='Trained/')
-		if stats.training.bestLoss is True: torch.save(net.state_dict(), 'Trained/ibmGestureNet.pt')
+		stats.plot(saveFig=True, path='Trained/'+'prune/'+str(args.prunerate))
+		if stats.training.bestLoss is True: torch.save(net.state_dict(), 'Trained/'+'prune/'+str(args.prunerate) + '/ibmGestureNet.pt')
 
 	# Save training data
-	stats.save('Trained/')
-	net.load_state_dict(torch.load('Trained/ibmGestureNet.pt'))
+	stats.save('Trained/'+'prune/'+str(args.prunerate))
+	net.load_state_dict(torch.load('Trained/'+'prune/'+str(args.prunerate) + '/ibmGestureNet.pt'))
 	genLoihiParams(net)
 
 	# Plot the results.

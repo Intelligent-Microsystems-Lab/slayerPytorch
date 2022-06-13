@@ -16,6 +16,7 @@ training:
         tgtSpikeRegion: {start: 0, stop: 1450}    # only valid for NumSpikes and ProbSpikes
         tgtSpikeCount: {true: 180, false: 30}    # only valid for NumSpikes
     path:
-        in:      /neuromorphic/shared/Datasets/IBMGesture/DvsGesture_converted_to_bs2_1450/DvsGestureRaw/
-        train:   /neuromorphic/shared/Datasets/IBMGesture/DvsGesture_converted_to_bs2_1450/train.txt
-        test:    /neuromorphic/shared/Datasets/IBMGesture/DvsGesture_converted_to_bs2_1450/test.txt
+        trainFile:      /afs/crc.nd.edu/user/p/ptaheri/Public/dataSets/IBMGesture/ibmGestureTrain/
+        testFile: /afs/crc.nd.edu/user/p/ptaheri/Public/dataSets/IBMGesture/ibmGestureTest/
+        train:   /afs/crc.nd.edu/user/p/ptaheri/Public/dataSets/IBMGesture/train.txt
+        test:    /afs/crc.nd.edu/user/p/ptaheri/Public/dataSets/IBMGesture/test.txt

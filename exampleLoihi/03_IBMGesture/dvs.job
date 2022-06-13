@@ -1,0 +1,13 @@
+#!/bin/bash 
+#$ -M ptaheri@nd.edu 
+#$ -m abe
+#$ -q gpu
+#$ -l gpu_card=1
+#$ -N slayerPrune
+#$ -o ./logs/out.txt
+#$ -e ./logs/error.txt
+module load python
+module load cuda/10.2
+prune_rate=0
+mkdir Trained/prune/$prune_rate -p 
+python3 ibmGestureTrain.py --prunerate $prune_rate
