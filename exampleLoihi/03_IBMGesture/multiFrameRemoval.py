@@ -72,6 +72,7 @@ class Network(torch.nn.Module):
     def forward(self, spikeInput):
         spike = self.slayer.spikeLoihi(self.pool1(spikeInput )) # 32, 32, 2
         spike = self.slayer.delayShift(spike, 1)
+        import pdb;pdb.set_trace()
         spike = self.drop(spike)
         spike = self.slayer.spikeLoihi(self.conv1(spike)) # 32, 32, 16
         spike = self.slayer.delayShift(spike, 1)
