@@ -328,7 +328,8 @@ class spikeLayer(torch.nn.Module):
         >>> drop = snnLayer.dropout(0.2)
         >>> output = drop(input)
         '''
-        return _dropoutLayer(p, inplace)
+        #return _dropoutLayer(p, inplace)
+        return _dropoutFrame(p,inplace)
 
     def delayShift(self, input, delay, Ts=1):
         '''
@@ -756,6 +757,12 @@ class _dropoutLayer(nn.Dropout3d):
         inputShape = input.shape
         return F.dropout3d(input.reshape((inputShape[0], -1, 1, 1, inputShape[-1])),
                            self.p, self.training, self.inplace).reshape(inputShape)
+class _dropoutFrame(nn.Dropout3d)
+    def forward(self, input):
+        inputShape = input.shape
+        return F.dropout3d(input.permute(0,4,1,2,3),self.p, self.training, self.inplace)
+
+
 
 class _pspLayer(nn.Conv3d):
     '''
