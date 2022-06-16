@@ -233,7 +233,7 @@ if __name__ == '__main__':
         # Testing loop.
         # Same steps as Training loops except loss backpropagation and weight update.
         for i, (input, target, label) in enumerate(testLoader, 0):
-            net.eval()
+            #net.eval()
             with torch.no_grad():
                 input  = input.to(device)
                 target = target.to(device) 
@@ -250,7 +250,7 @@ if __name__ == '__main__':
         # Update stats.
         stats.update()
         filename = str('Trained/prunerate_' + str(args.prunerate)+ 'droprate_' + str(args.droprate))
-        stats.plot(saveFig=True, path='Trained/'+'prune/'+str(args.prunerate))
+        stats.plot(saveFig=True, path=filename + '/')
         if stats.training.bestLoss is True: torch.save(net.state_dict(), filename + '/ibmGestureNet.pt')
 
     # Save training data

@@ -4,11 +4,11 @@
 #$ -q gpu
 #$ -l gpu_card=1
 #$ -N slayerPrune
-#$ -o ./logs/out.txt
+#$ -o ./logs/out_drop_0.5.txt
 #$ -e ./logs/error.txt
 module load python
 module load cuda/10.2
 prune_rate=0.0
-droprate=0.2
+droprate=0.5
 mkdir Trained/prunerate_${prune_rate}droprate_$droprate -p 
 python3 ibmGestureTrain.py --prunerate $prune_rate --droprate  $droprate
