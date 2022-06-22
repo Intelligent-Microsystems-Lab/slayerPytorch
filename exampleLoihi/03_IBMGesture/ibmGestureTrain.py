@@ -194,7 +194,7 @@ if __name__ == '__main__':
         snn.io.showTD(snn.io.spikeArrayToEvent(input.reshape((2, 128, 128, -1)).cpu().data.numpy()))
         
     # for epoch in range(500):
-    for epoch in range(50):
+    for epoch in range(200):
         tSt = datetime.now()
 
         # Training loop.

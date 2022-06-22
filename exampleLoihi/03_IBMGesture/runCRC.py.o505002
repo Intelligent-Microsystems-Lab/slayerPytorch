@@ -1,0 +1,9 @@
+/opt/sge/crc/spool/d12chas517/job_scripts/505002: line 1: import: command not found
+/opt/sge/crc/spool/d12chas517/job_scripts/505002: line 2: import: command not found
+/opt/sge/crc/spool/d12chas517/job_scripts/505002: line 3: import: command not found
+/opt/sge/crc/spool/d12chas517/job_scripts/505002: line 4: import: command not found
+/opt/sge/crc/spool/d12chas517/job_scripts/505002: line 5: import: command not found
+/opt/sge/crc/spool/d12chas517/job_scripts/505002: line 6: import: command not found
+/opt/sge/crc/spool/d12chas517/job_scripts/505002: line 9: path: command not found
+/opt/sge/crc/spool/d12chas517/job_scripts/505002: line 11: syntax error near unexpected token `('
+/opt/sge/crc/spool/d12chas517/job_scripts/505002: line 11: `taskID = int(os.getenv("SGE_TASK_ID"))-1'

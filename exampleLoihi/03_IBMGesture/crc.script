@@ -1,0 +1,11 @@
+#!/bin/bash 
+#$ -N slayer
+#$ -q gpu@@joshi -l gpu_card=1
+#$ -t 1-72:1
+#$ -o ./logs/
+#$ -e ./logs/
+module load python
+module load conda
+conda activate slayer
+module load python
+python3 runCRC.py ${SGE_TASK_ID}

@@ -1,0 +1,274 @@
+Loading python/3.7.3
+  Loading requirement: tcl/8.6.8 gcc/8.3.0
+Max PSP kernel: 195.0
+Scaling neuron[scaleRho] by Max PSP Kernel @slayerLoihi
+Max PSP kernel: 195.0
+Scaling neuron[scaleRho] by Max PSP Kernel @slayerLoihi
+/afs/crc.nd.edu/user/p/ptaheri/.conda/envs/slayer/lib/python3.7/site-packages/matplotlib/animation.py:974: UserWarning: Animation was deleted without rendering anything. This is most likely unintended. To prevent deletion, assign the Animation to a variable that exists for as long as you need the Animation.
+  'Animation was deleted without rendering anything. This is '
+[0A
+Epoch :          0(i =       0)
+None
+loss = 2.5036                             accuracy = 1                        
+[4A
+Epoch :          0(i =       1)
+None
+loss = 3.7889                             accuracy = 1                        
+[4A
+Epoch :          0(i =       2)
+None
+loss = 3.387                              accuracy = 1                        
+[4A
+Epoch :          0(i =       3)
+None
+loss = 2.967                              accuracy = 1                        
+[4A
+Epoch :          0(i =       4)
+None
+loss = 2.8385                             accuracy = 1                        
+[4A
+Epoch :          0(i =       5)
+None
+loss = 3.0131                             accuracy = 0.95833                  
+[4A
+Epoch :          0(i =       6)
+None
+loss = 2.9397                             accuracy = 0.96429                  
+[4A
+Epoch :          0(i =       7)
+None
+loss = 2.9647                             accuracy = 0.9375                   
+[4A
+Epoch :          0(i =       8)
+None
+loss = 3.0882                             accuracy = 0.94444                  
+[4A
+Epoch :          0(i =       9)
+None
+loss = 3.0987                             accuracy = 0.925                    
+[4A
+Epoch :          0(i =      10)
+None
+loss = 3.1864                             accuracy = 0.90909                  
+[4A
+Epoch :          0(i =      11)
+None
+loss = 3.2183                             accuracy = 0.91667                  
+[4A
+Epoch :          0(i =      12)
+None
+loss = 3.4248                             accuracy = 0.90385                  
+[4A
+Epoch :          0(i =      13)
+None
+loss = 3.4128                             accuracy = 0.91071                  
+[4A
+Epoch :          0(i =      14)
+None
+loss = 3.4262                             accuracy = 0.91667                  
+[4A
+Epoch :          0(i =      15)
+None
+loss = 3.479                              accuracy = 0.92188                  
+[4A
+Epoch :          0(i =      16)
+None
+loss = 3.5108                             accuracy = 0.92647                  
+[4A
+Epoch :          0(i =      17)
+None
+loss = 3.5561                             accuracy = 0.93056                  
+[4A
+Epoch :          0(i =      18)
+None
+loss = 3.5575                             accuracy = 0.93421                  
+[4A
+Epoch :          0(i =      19)
+None
+loss = 3.7088                             accuracy = 0.925                    
+[4A
+Epoch :          0(i =      20)
+None
+loss = 3.6309                             accuracy = 0.92857                  
+[4A
+Epoch :          0(i =      21)
+None
+loss = 3.5461                             accuracy = 0.93182                  
+[4A
+Epoch :          0(i =      22)
+None
+loss = 3.5908                             accuracy = 0.92391                  
+[4A
+Epoch :          0(i =      23)
+None
+loss = 3.5275                             accuracy = 0.92708                  
+[4A
+Epoch :          0(i =      24)
+None
+loss = 3.4496                             accuracy = 0.93                     
+[4A
+Epoch :          0(i =      25)
+None
+loss = 3.4473                             accuracy = 0.92308                  
+[4A
+Epoch :          0(i =      26)
+None
+loss = 3.3858                             accuracy = 0.92593                  
+[4A
+Epoch :          0(i =      27)
+None
+loss = 3.3474                             accuracy = 0.92857                  
+[4A
+Epoch :          0(i =      28)
+None
+loss = 3.3682                             accuracy = 0.93103                  
+[4A
+Epoch :          0(i =      29)
+None
+loss = 3.3773                             accuracy = 0.925                    
+[4A
+Epoch :          0(i =      30)
+None
+loss = 3.4369                             accuracy = 0.91935                  
+[4A
+Epoch :          0(i =      31)
+None
+loss = 3.4253                             accuracy = 0.92188                  
+[4A
+Epoch :          0(i =      32)
+None
+loss = 3.4077                             accuracy = 0.92424                  
+[4A
+Epoch :          0(i =      33)
+None
+loss = 3.4081                             accuracy = 0.92647                  
+[4A
+Epoch :          0(i =      34)
+None
+loss = 3.3867                             accuracy = 0.92143                  
+[4A
+Epoch :          0(i =      35)
+None
+loss = 3.3918                             accuracy = 0.92361                  
+[4A
+Epoch :          0(i =      36)
+None
+loss = 3.4253                             accuracy = 0.92568                  
+[4A
+Epoch :          0(i =      37)
+None
+loss = 3.396                              accuracy = 0.92763                  
+[4A
+Epoch :          0(i =      38)
+None
+loss = 3.4013                             accuracy = 0.92308                  
+[4A
+Epoch :          0(i =      39)
+None
+loss = 3.4123                             accuracy = 0.91875                  
+[4A
+Epoch :          0(i =      40)
+None
+loss = 3.4225                             accuracy = 0.91463                  
+[4A
+Epoch :          0(i =      41)
+None
+loss = 3.4158                             accuracy = 0.91667                  
+[4A
+Epoch :          0(i =      42)
+None
+loss = 3.3988                             accuracy = 0.9186                   
+[4A
+Epoch :          0(i =      43)
+None
+loss = 3.3556                             accuracy = 0.92045                  
+[4A
+Epoch :          0(i =      44)
+None
+loss = 3.3335                             accuracy = 0.91667                  
+[4A
+Epoch :          0(i =      45)
+None
+loss = 3.2953                             accuracy = 0.91848                  
+[4A
+Epoch :          0(i =      46)
+None
+loss = 3.3553                             accuracy = 0.91489                  
+[4A
+Epoch :          0(i =      47)
+None
+loss = 3.3455                             accuracy = 0.91667                  
+[4A
+Epoch :          0(i =      48)
+None
+loss = 3.3778                             accuracy = 0.91837                  
+[4A
+Epoch :          0(i =      49)
+None
+loss = 3.3664                             accuracy = 0.92                     
+[4A
+Epoch :          0(i =      50)
+None
+loss = 3.3723                             accuracy = 0.92157                  
+[4A
+Epoch :          0(i =      51)
+None
+loss = 3.3996                             accuracy = 0.91827                  
+[4A
+Epoch :          0(i =      52)
+None
+loss = 3.3712                             accuracy = 0.91981                  
+[4A
+Epoch :          0(i =      53)
+None
+loss = 3.3502                             accuracy = 0.9213                   
+[4A
+Epoch :          0(i =      54)
+None
+loss = 3.3773                             accuracy = 0.91818                  
+[4A
+Epoch :          0(i =      55)
+None
+loss = 3.3684                             accuracy = 0.91964                  
+[4A
+Epoch :          0(i =      56)
+None
+loss = 3.3709                             accuracy = 0.91228                  
+[4A
+Epoch :          0(i =      57)
+None
+loss = 3.3925                             accuracy = 0.90948                  
+[4A
+Epoch :          0(i =      58)
+None
+loss = 3.3699                             accuracy = 0.91102                  
+[4A
+Epoch :          0(i =      59)
+None
+loss = 3.3948                             accuracy = 0.90833                  
+[4A
+Epoch :          0(i =      60)
+None
+loss = 3.408                              accuracy = 0.90574                  
+[4A
+Epoch :          0(i =      61)
+None
+loss = 3.4121                             accuracy = 0.90726                  
+[4A
+Epoch :          0(i =      62)
+None
+loss = 3.4416                             accuracy = 0.90476                  
+[4A
+Epoch :          0(i =      63)
+None
+loss = 3.415                              accuracy = 0.90625                  
+[4A
+Epoch :          0(i =      64)
+None
+loss = 3.3982                             accuracy = 0.90769                  
+[4A
+Epoch :          0(i =      65)
+None
+loss = 3.4147                             accuracy = 0.9053                   
+Accuracy with 8 consec frame droppe:  [0.9053030303030303]
+Done
