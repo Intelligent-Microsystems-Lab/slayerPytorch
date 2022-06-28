@@ -277,12 +277,12 @@ class learningStats():
         '''
 
         with open(filename + 'loss.txt', 'wt') as loss:
-            loss.write('#%11s %11s\r\n'%('Train', 'Test'))
+            loss.write('%11s %11s\r\n'%('Train', 'Test'))
             for i in range(len(self.training.lossLog)): 
                 loss.write('%12.6g %12.6g \r\n'%(self.training.lossLog[i], self.testing.lossLog[i]))
 
         with open(filename + 'accuracy.txt', 'wt') as accuracy:
-            accuracy.write('#%11s %11s\r\n'%('Train', 'Test'))
+            accuracy.write('%11s %11s\r\n'%('Train', 'Test'))
             if self.training.accuracyLog != [None]*len(self.training.accuracyLog):
                 for i in range(len(self.training.accuracyLog)): 
                     accuracy.write('%12.6g %12.6g \r\n'%(
