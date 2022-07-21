@@ -1,52 +1,235 @@
 import sys, os
 CURRENT_TEST_DIR = os.getcwd()
 sys.path.append(CURRENT_TEST_DIR + "/../../src")
-
+import csv
+from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import Dataset, DataLoader
 import slayerSNN as snn
-from learningStats import learningStats
-from slayerLoihi import spikeLayer
-from quantizeParams import quantizeWeights
-from ibmGestureTrain import *
+import pandas as pd
+import torch.nn.utils.prune as prune
+import argparse
 
-netParams = snn.params('network.yaml')
+parser = argparse.ArgumentParser(description='PyTorch SLAYER Training')
+parser.add_argument('--prunerate', default=0, type=float, metavar='DR',
+					help='pruneout') 
+parser.add_argument('--droprate', default=0.1, type=float, metavar='DR',
+					help='dropout')
+parser.add_argument('--validate', default=False, type=bool, metavar='DR',
+					help='validate')                    
+parser.add_argument('--frame_drope', default=3, type=int, metavar='DR',
+					help='number of consecutive frames to drop')                    
+parser.add_argument('--threshold', default=20, type=int, metavar='DR',
+					help='density threshold for frames to drop')                    
+									  
+# Define dataset module
+class IBMGestureDataset(Dataset):
+	def __init__(self, datasetPath, sampleFile, samplingTime, sampleLength):
+		self.path = datasetPath 
 
-# Define the cuda device to run the code on.
-device = torch.device('cuda')
+		#self.samples = np.loadtxt(sampleFile, skiprows=1).astype('int')
+		self.samples = pd.read_csv(sampleFile) 
+		self.samplingTime = samplingTime
+		self.nTimeBins    = int(sampleLength / samplingTime)
 
-# Create network instance.
-net = Network(netParams).to(device)
+	def __getitem__(self, index):
+		# Read inoput and label
+		# inputIndex  = self.samples[index, 0]
+		# classLabel  = self.samples[index, 1]
+		inputIndex  = self.samples['sample'][index]
+		classLabel  = self.samples['labels'][index]     
+		# Read input spike
+		inputSpikes = snn.io.readNpSpikes(
+			self.path + str(inputIndex) + '.npy'
+		).toSpikeTensor(torch.zeros((2, 128, 128, self.nTimeBins)),
+					samplingTime=self.samplingTime)        
+		
+		# Create one-hot encoded desired matrix
+		desiredClass = torch.zeros((11, 1, 1, 1))
+		desiredClass[classLabel,...] = 1
+		
+		return inputSpikes, desiredClass, classLabel
 
-# load saved net
-net.load_state_dict(torch.load('Trained/ibmGestureNet.pt'))
+	def __len__(self):
+		return self.samples.shape[0]
+		
+# Define the network
+class Network(torch.nn.Module):
+	def __init__(self, netParams):
+		super(Network, self).__init__()
+		# initialize slayer
+		slayer = snn.loihi(netParams['neuron'], netParams['simulation'])
+		self.slayer = slayer
+		# define network functions
+		self.conv1 = slayer.conv(2, 16, 5, padding=2, weightScale=10)
+		self.conv2 = slayer.conv(16, 32, 3, padding=1, weightScale=50)
+		self.pool1 = slayer.pool(4)
+		self.pool2 = slayer.pool(2)
+		self.pool3 = slayer.pool(2)
+		self.fc1   = slayer.dense((8*8*32), 512)
+		self.fc2   = slayer.dense(512, 11)
+		self.drop  = slayer.dropout(args.droprate)
+		self.conv1_dropped_frames  = []
+		self.conv2_dropped_frames  = []
+		self.dense1_dropped_frames = []
+		self.dropped_frames = []
 
-testingSet = IBMGestureDataset(datasetPath =netParams['training']['path']['in'], 
-						       sampleFile  =netParams['training']['path']['test'],
-						       samplingTime=netParams['simulation']['Ts'],
-						       sampleLength=netParams['simulation']['tSample'])
-testLoader = DataLoader(dataset=testingSet, batch_size=4, shuffle=False, num_workers=4)
-
-# generate Loihi parameters
-stats = learningStats()
-
-for i, (input, target, label) in enumerate(testLoader, 0):
-	net.eval()
-
-	input  = input.to(device)
-	target = target.to(device) 
+	def forward(self, spikeInput):
+		spike = self.slayer.spikeLoihi(self.pool1(spikeInput )) # 32, 32, 2
+		spike = self.slayer.delayShift(spike, 1)
+		distr = []
+		time  = []
+		for batch in range(spike.shape[0]):
+					for timestep in range(spike.shape[4]):
+						frameDensity = np.count_nonzero(spike[batch,:,:,:,timestep].cpu().detach().numpy())
+						distr.append(frameDensity)
+						time.append(timestep)					
+		with open('validate/threshold_trainset/conv1_activation_density_log.csv', 'a', encoding='UTF8') as f:
+			writer = csv.writer(f)
+			writer.writerow(distr)        
 	
-	output = net.forward(input)
+		#spike = self.drop(spike)
+		spike = self.slayer.spikeLoihi(self.conv1(spike)) # 32, 32, 16
+		spike = self.slayer.delayShift(spike, 1)
+		
+		spike = self.slayer.spikeLoihi(self.pool2(spike)) # 16, 16, 16
+		spike = self.slayer.delayShift(spike, 1)
+		#Dropping frames for Conv2 input activations
+		distr = []
+		time  = []
+		for batch in range(spike.shape[0]):
+					for timestep in range(spike.shape[4]):
+						frameDensity = np.count_nonzero(spike[batch,:,:,:,timestep].cpu().detach().numpy())
+						distr.append(frameDensity)
+						time.append(timestep)					
+		with open('validate/threshold_trainset/conv2_activation_density_log.csv', 'a', encoding='UTF8') as f:
+			writer = csv.writer(f)
+			writer.writerow(distr)
+		
+		#spike = self.drop(spike)
+		spike = self.slayer.spikeLoihi(self.conv2(spike)) # 16, 16, 32
+		spike = self.slayer.delayShift(spike, 1)
+		
+		spike = self.slayer.spikeLoihi(self.pool3(spike)) #  8,  8, 32
+		spike = spike.reshape((spike.shape[0], -1, 1, 1, spike.shape[-1]))
+		spike = self.slayer.delayShift(spike, 1)
+		distr = []
+		time  = []
+		for batch in range(spike.shape[0]):
+					for timestep in range(spike.shape[4]):
+						frameDensity = np.count_nonzero(spike[batch,:,:,:,timestep].cpu().detach().numpy())
+						distr.append(frameDensity)
+						time.append(timestep)					
+		with open('validate/threshold_trainset/dense1_activation_density_log.csv', 'a', encoding='UTF8') as f:
+			writer = csv.writer(f)
+			writer.writerow(distr)
 
-	stats.testing.correctSamples += torch.sum( snn.predict.getClass(output) == label ).data.item()
-	stats.testing.numSamples     += len(label)
+		#spike = self.drop(spike)
+		spike = self.slayer.spikeLoihi(self.fc1  (spike)) # 512
+		spike = self.slayer.delayShift(spike, 1)
+		
+		spike = self.slayer.spikeLoihi(self.fc2  (spike)) # 11
+		spike = self.slayer.delayShift(spike, 1)
+		
+		return spike
+		
+# Define Loihi parameter generator
+def genLoihiParams(net, filename):
+	fc1Weights   = snn.utils.quantize(net.fc1.weight  , 2).flatten().cpu().data.numpy()
+	fc2Weights   = snn.utils.quantize(net.fc2.weight  , 2).flatten().cpu().data.numpy()
+	conv1Weights = snn.utils.quantize(net.conv1.weight, 2).flatten().cpu().data.numpy()
+	conv2Weights = snn.utils.quantize(net.conv2.weight, 2).flatten().cpu().data.numpy()
+	pool1Weights = snn.utils.quantize(net.pool1.weight, 2).flatten().cpu().data.numpy()
+	pool2Weights = snn.utils.quantize(net.pool2.weight, 2).flatten().cpu().data.numpy()
+	pool3Weights = snn.utils.quantize(net.pool3.weight, 2).flatten().cpu().data.numpy()
+	
+	np.save(filename+ '/fc1.npy'  , fc1Weights)
+	np.save(filename+ '/fc2.npy'  , fc2Weights)
+	np.save(filename+ '/conv1.npy', conv1Weights)
+	np.save(filename+ '/conv2.npy', conv2Weights)
+	np.save(filename+ '/pool1.npy', pool1Weights)
+	np.save(filename+ '/pool2.npy', pool2Weights)
+	np.save(filename+ '/pool3.npy', pool3Weights)
 
-	# loss = error.numSpikes(output, target)
-	# stats.testing.lossSum += loss.cpu().data.item()
-	stats.print(0, i)
+	plt.figure(11)
+	plt.hist(fc1Weights  , 256)
+	plt.title('fc1 weights')
 
-genLoihiParams(net)
+	plt.figure(12)
+	plt.hist(fc2Weights  , 256)
+	plt.title('fc2 weights')
 
-plt.show()
+	plt.figure(13)
+	plt.hist(conv1Weights, 256)
+	plt.title('conv1 weights')
+
+	plt.figure(14)
+	plt.hist(conv2Weights, 256)
+	plt.title('conv2 weights')
+
+	plt.figure(15)
+	plt.hist(pool1Weights, 256)
+	plt.title('pool1 weights')
+
+	plt.figure(16)
+	plt.hist(pool2Weights, 256)
+	plt.title('pool2 weights')
+
+	plt.figure(17)
+	plt.hist(pool3Weights, 256)
+	plt.title('pool3 weights')
+	
+if __name__ == '__main__':
+	
+	global args
+	args = parser.parse_args()
+	prunerate = args.prunerate
+	droprate = args.droprate
+	ispruning = False
+	if prunerate !=0:
+		ispruning = True    
+	netParams = snn.params('network.yaml')
+	
+	# Define the cuda device to run the code on.
+	device = torch.device('cuda')
+	# deviceIds = [2, 3]
+
+	# Create network instance.
+	net = Network(netParams).to(device)
+	# net = torch.nn.DataParallel(Network(netParams).to(device), device_ids=deviceIds)
+	''' Uncomment for fine-tuning or validation '''
+	net.load_state_dict(torch.load('TrainedFull/ibmGestureNet.pt',map_location=device))
+	# Create snn loss instance.
+	error = snn.loss(netParams, snn.loihi).to(device)
+
+	# Define optimizer module.
+	# optimizer = torch.optim.Adam(net.parameters(), lr = 0.01, amsgrad = True)
+	optimizer = snn.utils.optim.Nadam(net.parameters(), lr = 0.01, amsgrad = True)
+	# Dataset and dataLoader instances.
+	trainingSet = IBMGestureDataset(datasetPath =netParams['training']['path']['trainFile'], 
+									sampleFile  =netParams['training']['path']['train'],
+									samplingTime=netParams['simulation']['Ts'],
+									sampleLength=netParams['simulation']['tSample'])
+	trainLoader = DataLoader(dataset=trainingSet, batch_size=4, shuffle=True, num_workers=1)
+
+	testingSet = IBMGestureDataset(datasetPath  =netParams['training']['path']['testFile'], 
+								   sampleFile  =netParams['training']['path']['test'],
+								   samplingTime=netParams['simulation']['Ts'],
+								   sampleLength=netParams['simulation']['tSample'])
+	testLoader = DataLoader(dataset=testingSet, batch_size=4, shuffle=True, num_workers=1)
+
+	# Learning stats instance.
+	stats = snn.utils.stats()
+	if not args.validate:     
+	# Training loop.
+		for i, (input, target, label) in enumerate(trainLoader, 0):
+			net.train()
+
+			# Move the input and target to correct GPU.
+			input  = input.to(device)
+			target = target.to(device) 
+
+			# Forward pass of the network.
+			output = net.forward(input)

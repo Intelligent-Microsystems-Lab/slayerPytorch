@@ -72,7 +72,9 @@ class Network(torch.nn.Module):
     def forward(self, spikeInput):
         spike = self.slayer.spikeLoihi(self.pool1(spikeInput )) # 32, 32, 2
         spike = self.slayer.delayShift(spike, 1)
-        fig, axs = plt.subplots(2, 2)
+        from matplotlib.pyplot import figure
+        figure(figsize=(8, 6), dpi=900)
+        fig, axs = plt.subplots(1, 2)
         distr = []
         time  = []  
         for timestep in range(1450):
@@ -81,9 +83,13 @@ class Network(torch.nn.Module):
             time.append(timestep)
         y = np.array(distr) 
         x = np.array(time)
-        axs[0,0].bar(x,y)
-        import pdb;pdb.set_trace()
-        #plt.savefig("conv1_in.png")   
+
+        axs[0].bar(x,y)
+        axs[1].plot(x,y)
+        plt.savefig("conv1_in.png")
+        plt.savefig("conv1_in.svg")
+        
+        import pdb;pdb.set_trace()   
         spike = self.drop(spike)
         spike = self.slayer.spikeLoihi(self.conv1(spike)) # 32, 32, 16
         spike = self.slayer.delayShift(spike, 1)
@@ -99,6 +105,7 @@ class Network(torch.nn.Module):
             time.append(timestep)
         y = np.array(distr) 
         x = np.array(time)
+        #import pdb;pdb.set_trace()
         axs[0,1].bar(x,y)
         #plt.savefig("conv2_input.png")           
         spike = self.slayer.spikeLoihi(self.conv2(spike)) # 16, 16, 32
